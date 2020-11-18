@@ -167,7 +167,7 @@ type LeafNode struct {
 
 func (l LeafNode) RawData() []byte {
 	fmt.Printf("leaf-node-data: %s\n", string(l.data))
-	return l.data
+	return append(leafPrefix, l.data...)
 }
 
 func (l LeafNode) Cid() cid.Cid {
@@ -175,8 +175,10 @@ func (l LeafNode) Cid() cid.Cid {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("leaf-node-cid: %#v\n", cid.NewCidV1(Tree, mh.Multihash(buf)).String())
-	return cid.NewCidV1(Tree, mh.Multihash(buf))
+	cidV1 := cid.NewCidV1(Tree, mh.Multihash(buf))
+	fmt.Printf("\nrawHash: %s\n", l.rawHash)
+	fmt.Printf("leaf-node-cid: %#v\n", cidV1)
+	return cidV1
 }
 
 func (l LeafNode) String() string {
@@ -315,9 +317,13 @@ func emptyHash() []byte {
 }
 
 func leafHash(leaf []byte) []byte {
-	return sha256.New().Sum(append(leafPrefix, leaf...))
+	h := sha256.New()
+	h.Write(append(leafPrefix, leaf...))
+	return h.Sum(nil)
 }
 
 func innerHash(left []byte, right []byte) []byte {
-	return sha256.New().Sum(append(innerPrefix, append(left, right...)...))
+	h := sha256.New()
+	h.Write(append(innerPrefix, append(left, right...)...))
+	return h.Sum(nil)
 }
