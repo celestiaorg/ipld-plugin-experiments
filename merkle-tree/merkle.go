@@ -1,6 +1,7 @@
 package merkle
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/json"
 	"errors"
@@ -48,8 +49,32 @@ func (t TreePlugin) RegisterBlockDecoders(dec node.BlockDecoder) error {
 
 func TreeNodeParser(block blocks.Block) (node.Node, error) {
 	fmt.Printf("\ncid: %#v\n", block.Cid())
-	fmt.Printf("data: %s\n", string(block.RawData()))
-	panic("implement me")
+	fmt.Printf("data: %x\n", string(block.RawData()))
+	fmt.Printf("len(data): %d\n", len(block.RawData()))
+	data := block.RawData()
+	if len(data) < 32 { // XXX: do we really get back the leaf data?
+		fmt.Println(string(data))
+	}
+	if len(data) == 0 {
+		return &LeafNode{
+			rawHash: emptyHash(),
+			data:    nil,
+		}, nil
+	}
+	firstByte := data[:1]
+	if bytes.Equal(firstByte, leafPrefix) {
+		return &LeafNode{
+			rawHash: block.Cid().Hash(),
+			data:    data,
+		}, nil
+	} else if bytes.Equal(firstByte, innerPrefix) {
+		return InnerNode{
+			rawHash: block.Cid().Hash(),
+			l:       data[1:33],
+			r:       data[33:],
+		}, nil
+	}
+	return nil, errors.New("unknown err")
 }
 
 func TreeLeavesJSONInputParser(r io.Reader, _mhType uint64, _mhLen int) ([]node.Node, error) {
@@ -176,7 +201,7 @@ func (l LeafNode) Cid() cid.Cid {
 		panic(err)
 	}
 	cidV1 := cid.NewCidV1(Tree, mh.Multihash(buf))
-	fmt.Printf("\nrawHash: %s\n", l.rawHash)
+	fmt.Printf("\nrawHash: %x\n", l.rawHash)
 	fmt.Printf("leaf-node-cid: %#v\n", cidV1)
 	return cidV1
 }
@@ -313,7 +338,9 @@ var (
 )
 
 func emptyHash() []byte {
-	return sha256.New().Sum([]byte{})
+	h := sha256.New()
+	h.Write(nil)
+	return h.Sum(nil)
 }
 
 func leafHash(leaf []byte) []byte {
