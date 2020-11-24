@@ -14,12 +14,19 @@ import (
 	"github.com/ipfs/go-ipfs/core/coredag"
 	"github.com/ipfs/go-ipfs/plugin"
 	node "github.com/ipfs/go-ipld-format"
+	coreiface "github.com/ipfs/interface-go-ipfs-core"
 	mh "github.com/multiformats/go-multihash"
 )
 
 type TreePlugin struct{}
 
+func (t TreePlugin) Start(api coreiface.CoreAPI) error {
+	fmt.Println("TreePlugin loaded")
+	return nil
+}
+
 var _ plugin.PluginIPLD = (*TreePlugin)(nil)
+var _ plugin.PluginDaemon = (*TreePlugin)(nil)
 
 // 0x87 seems to be free:
 // https://github.com/multiformats/multicodec/blob/master/table.csv
