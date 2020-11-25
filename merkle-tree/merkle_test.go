@@ -2,6 +2,7 @@ package merkle
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -24,15 +25,27 @@ func TestGenerateJSONFiles(t *testing.T) {
 	if !regenerate {
 		t.Skip("Skipping regenerating test files")
 	}
-	leafs := generateLeavesJSON(32)
-
-	res, err := json.Marshal(leafs)
-	if err != nil {
-		t.Fatalf("unexpected err while marshaling: %s", err)
+	tcs := []struct {
+		name      string
+		iters     int
+		numLeaves int
+	}{
+		{"32", 100, 32},
+		//{"256", 100, 256},
 	}
+	for _, tc := range tcs {
+		for iter := 0; iter < tc.iters; iter++ {
+			leafs := generateLeavesJSON(tc.numLeaves)
 
-	if err := ioutil.WriteFile("../testfiles/32.json", res, 0644); err != nil {
-		t.Fatalf("could not write test file")
+			res, err := json.Marshal(leafs)
+			if err != nil {
+				t.Fatalf("unexpected err while marshaling: %s", err)
+			}
+
+			if err := ioutil.WriteFile(fmt.Sprintf("../testfiles/%s_%v.json", tc.name, iter), res, 0644); err != nil {
+				t.Fatalf("could not write test file: %v", err)
+			}
+		}
 	}
 }
 

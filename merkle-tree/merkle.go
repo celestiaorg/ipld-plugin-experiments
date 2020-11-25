@@ -195,7 +195,7 @@ type LeafNode struct {
 }
 
 func (l LeafNode) RawData() []byte {
-	// fmt.Printf("leaf-node-data: %s\n", string(l.data))
+	fmt.Printf("leaf-node-data: %s\n", string(l.data))
 	return append(leafPrefix, l.data...)
 }
 
@@ -205,8 +205,8 @@ func (l LeafNode) Cid() cid.Cid {
 		panic(err)
 	}
 	cidV1 := cid.NewCidV1(Tree, mh.Multihash(buf))
-	// fmt.Printf("\nrawHash: %x\n", l.rawHash)
-	// fmt.Printf("leaf-node-cid: %#v\n", cidV1)
+	fmt.Printf("\nrawHash: %x\n", l.rawHash)
+	fmt.Printf("leaf-node-cid: %#v\n", cidV1)
 	return cidV1
 }
 
@@ -294,6 +294,7 @@ func parseSharesFromJSON(r io.Reader) ([]Share, error) {
 }
 
 // ---- recursively compute the nodes (RFC-6962); used tendermint's implementation as a basis ---- //
+
 func computeNodes(items [][]byte) ([]byte, []node.Node) {
 	switch len(items) {
 	case 0:
