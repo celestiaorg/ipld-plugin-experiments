@@ -30,8 +30,8 @@ func TestGenerateJSONFiles(t *testing.T) {
 		iters     int
 		numLeaves int
 	}{
-		{"32", 100, 32},
-		//{"256", 100, 256},
+		//{"32", 100, 32},
+		{"256", 100, 256},
 	}
 	for _, tc := range tcs {
 		for iter := 0; iter < tc.iters; iter++ {
