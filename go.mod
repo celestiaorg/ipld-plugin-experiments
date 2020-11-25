@@ -11,4 +11,4 @@ require (
 	github.com/multiformats/go-multihash v0.0.14
 )
 
-// replace github.com/ipfs/go-ipfs => /Users/ismail/GolandProjects/go-ipfs
+replace github.com/ipfs/go-ipfs => /Users/ismail/GolandProjects/go-ipfs
