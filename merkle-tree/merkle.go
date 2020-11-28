@@ -55,24 +55,26 @@ func (t TreePlugin) RegisterBlockDecoders(dec node.BlockDecoder) error {
 }
 
 func TreeNodeParser(block blocks.Block) (node.Node, error) {
-	fmt.Printf("\ncid: %#v\n", block.Cid())
-	fmt.Printf("data: %x\n", string(block.RawData()))
-	fmt.Printf("len(data): %d\n", len(block.RawData()))
+	// fmt.Printf("\ncid: %#v\n", block.Cid())
+	// fmt.Printf("Data: %x\n", string(block.RawData()))
+	// fmt.Printf("len(Data): %d\n", len(block.RawData()))
 	data := block.RawData()
 	if len(data) == 0 {
 		return &LeafNode{
-			rawHash: emptyHash(),
-			data:    nil,
+			RawHash: emptyHash(),
+			Data:    nil,
 		}, nil
 	}
 	firstByte := data[:1]
 	if bytes.Equal(firstByte, leafPrefix) {
 		return &LeafNode{
-			rawHash: block.Cid().Hash(),
-			data:    data,
+			// FIXME: CID().Hash() will return the hash code || len(hash) || hash
+			RawHash: block.Cid().Hash(),
+			Data:    data[1:],
 		}, nil
 	} else if bytes.Equal(firstByte, innerPrefix) {
 		return InnerNode{
+			// FIXME: CID().Hash() will return the hash code || len(hash) || hash
 			rawHash: block.Cid().Hash(),
 			l:       data[1:33],
 			r:       data[33:],
@@ -105,12 +107,12 @@ type InnerNode struct {
 }
 
 func (i InnerNode) RawData() []byte {
-	// fmt.Sprintf("inner-node-data: %#v\n", append(innerPrefix, append(i.l, i.r...)...))
+	// fmt.Sprintf("inner-node-Data: %#v\n", append(innerPrefix, append(i.l, i.r...)...))
 	return append(innerPrefix, append(i.l, i.r...)...)
 }
 
 func (i InnerNode) Cid() cid.Cid {
-	// fmt.Sprintf("inner-node-cid: %#v\n", cidFromSha256(i.rawHash))
+	// fmt.Sprintf("inner-node-cid: %#v\n", cidFromSha256(i.RawHash))
 	return cidFromSha256(i.rawHash)
 }
 
@@ -190,23 +192,23 @@ func (i InnerNode) Size() (uint64, error) {
 }
 
 type LeafNode struct {
-	rawHash []byte
-	data    []byte
+	RawHash []byte
+	Data    []byte
 }
 
 func (l LeafNode) RawData() []byte {
-	fmt.Printf("leaf-node-data: %s\n", string(l.data))
-	return append(leafPrefix, l.data...)
+	//fmt.Printf("leaf-node-Data: %s\n", string(l.Data))
+	return append(leafPrefix, l.Data...)
 }
 
 func (l LeafNode) Cid() cid.Cid {
-	buf, err := mh.Encode(l.rawHash, mh.SHA2_256)
+	buf, err := mh.Encode(l.RawHash, mh.SHA2_256)
 	if err != nil {
 		panic(err)
 	}
 	cidV1 := cid.NewCidV1(Tree, mh.Multihash(buf))
-	fmt.Printf("\nrawHash: %x\n", l.rawHash)
-	fmt.Printf("leaf-node-cid: %#v\n", cidV1)
+	// fmt.Printf("\nrawHash: %x\n", l.RawHash)
+	// fmt.Printf("leaf-node-cid: %#v\n", cidV1)
 	return cidV1
 }
 
@@ -215,7 +217,7 @@ func (l LeafNode) String() string {
 leaf-node {
 	hash: %x,
 	Data: %s"
-}`, l.rawHash, l.data)
+}`, l.RawHash, l.Data)
 }
 
 func (l LeafNode) Loggable() map[string]interface{} {
@@ -224,8 +226,10 @@ func (l LeafNode) Loggable() map[string]interface{} {
 
 func (l LeafNode) Resolve(path []string) (interface{}, []string, error) {
 	if path[0] == "Data" {
-		fmt.Println("resolving leaf-data")
-		return &node.Link{Cid: l.Cid()}, nil, nil
+		// TODO: store the data separately
+		// currently Leaf{Data:} contains the actual data
+		// instead there should be a link in the leaf to the actual data
+		return nil, nil, nil
 	} else {
 		return nil, nil, errors.New("invalid path for leaf node")
 	}
@@ -300,14 +304,14 @@ func computeNodes(items [][]byte) ([]byte, []node.Node) {
 	case 0:
 		emptyHash := emptyHash()
 		return emptyHash, []node.Node{&LeafNode{
-			rawHash: emptyHash,
-			data:    nil,
+			RawHash: emptyHash,
+			Data:    nil,
 		}}
 	case 1:
 		hash := leafHash(items[0])
 		return hash, []node.Node{&LeafNode{
-			rawHash: hash,
-			data:    items[0],
+			RawHash: hash,
+			Data:    items[0],
 		}}
 	default:
 		k := getSplitPoint(int64(len(items)))

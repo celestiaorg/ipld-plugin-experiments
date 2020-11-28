@@ -1,10 +1,10 @@
 package merkle
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"math/rand"
 	"os"
 	"testing"
 )
