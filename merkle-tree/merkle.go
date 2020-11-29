@@ -55,25 +55,24 @@ func (t TreePlugin) RegisterBlockDecoders(dec node.BlockDecoder) error {
 }
 
 func TreeNodeParser(block blocks.Block) (node.Node, error) {
-	fmt.Printf("\ncid: %#v\n", block.Cid())
-	fmt.Printf("data: %x\n", string(block.RawData()))
-	fmt.Printf("len(data): %d\n", len(block.RawData()))
 	data := block.RawData()
 	if len(data) == 0 {
 		return &LeafNode{
-			rawHash: emptyHash(),
-			data:    nil,
+			RawHash: emptyHash(),
+			Data:    nil,
 		}, nil
 	}
 	firstByte := data[:1]
 	if bytes.Equal(firstByte, leafPrefix) {
+		h := block.Cid().Hash()
 		return &LeafNode{
-			rawHash: block.Cid().Hash(),
-			data:    data,
+			RawHash: h[2:], // CID().Hash() returns hash-code||len(hash)||hash
+			Data:    data[1:],
 		}, nil
 	} else if bytes.Equal(firstByte, innerPrefix) {
+		h := block.Cid().Hash()
 		return InnerNode{
-			rawHash: block.Cid().Hash(),
+			rawHash: h[2:], // CID().Hash() returns hash-code||len(hash)||hash
 			l:       data[1:33],
 			r:       data[33:],
 		}, nil
@@ -93,7 +92,7 @@ func TreeLeavesJSONInputParser(r io.Reader, _mhType uint64, _mhLen int) ([]node.
 	for i, share := range shares {
 		input[i] = share.Data
 	}
-	_, nodes := computeNodes(input)
+	_, nodes := ComputeNodes(input)
 	fmt.Println(fmt.Sprintf("length of nodes: %d", len(nodes)))
 	return nodes, nil
 
@@ -105,12 +104,12 @@ type InnerNode struct {
 }
 
 func (i InnerNode) RawData() []byte {
-	// fmt.Sprintf("inner-node-data: %#v\n", append(innerPrefix, append(i.l, i.r...)...))
+	// fmt.Sprintf("inner-node-Data: %#v\n", append(innerPrefix, append(i.l, i.r...)...))
 	return append(innerPrefix, append(i.l, i.r...)...)
 }
 
 func (i InnerNode) Cid() cid.Cid {
-	// fmt.Sprintf("inner-node-cid: %#v\n", cidFromSha256(i.rawHash))
+	// fmt.Sprintf("inner-node-cid: %#v\n", cidFromSha256(i.RawHash))
 	return cidFromSha256(i.rawHash)
 }
 
@@ -190,32 +189,29 @@ func (i InnerNode) Size() (uint64, error) {
 }
 
 type LeafNode struct {
-	rawHash []byte
-	data    []byte
+	RawHash []byte
+	Data    []byte
 }
 
 func (l LeafNode) RawData() []byte {
-	// fmt.Printf("leaf-node-data: %s\n", string(l.data))
-	return append(leafPrefix, l.data...)
+	return append(leafPrefix, l.Data...)
 }
 
 func (l LeafNode) Cid() cid.Cid {
-	buf, err := mh.Encode(l.rawHash, mh.SHA2_256)
+	buf, err := mh.Encode(l.RawHash, mh.SHA2_256)
 	if err != nil {
 		panic(err)
 	}
 	cidV1 := cid.NewCidV1(Tree, mh.Multihash(buf))
-	// fmt.Printf("\nrawHash: %x\n", l.rawHash)
-	// fmt.Printf("leaf-node-cid: %#v\n", cidV1)
 	return cidV1
 }
 
 func (l LeafNode) String() string {
 	return fmt.Sprintf(`
 leaf-node {
-	hash: %x,
-	Data: %s"
-}`, l.rawHash, l.data)
+	hash: 		%x,
+	len(Data): 	%v
+}`, l.RawHash, len(l.Data))
 }
 
 func (l LeafNode) Loggable() map[string]interface{} {
@@ -224,8 +220,10 @@ func (l LeafNode) Loggable() map[string]interface{} {
 
 func (l LeafNode) Resolve(path []string) (interface{}, []string, error) {
 	if path[0] == "Data" {
-		fmt.Println("resolving leaf-data")
-		return &node.Link{Cid: l.Cid()}, nil, nil
+		// TODO: store the data separately
+		// currently Leaf{Data:} contains the actual data
+		// instead there should be a link in the leaf to the actual data
+		return nil, nil, nil
 	} else {
 		return nil, nil, errors.New("invalid path for leaf node")
 	}
@@ -279,12 +277,12 @@ type Share struct {
 	Data []byte
 }
 
-type jsonLeaves struct {
+type JsonLeaves struct {
 	Leaves []Share
 }
 
 func parseSharesFromJSON(r io.Reader) ([]Share, error) {
-	var obj jsonLeaves
+	var obj JsonLeaves
 	dec := json.NewDecoder(r)
 	err := dec.Decode(&obj)
 	if err != nil {
@@ -294,24 +292,25 @@ func parseSharesFromJSON(r io.Reader) ([]Share, error) {
 }
 
 // ---- recursively compute the nodes (RFC-6962); used tendermint's implementation as a basis ---- //
-func computeNodes(items [][]byte) ([]byte, []node.Node) {
+
+func ComputeNodes(items [][]byte) ([]byte, []node.Node) {
 	switch len(items) {
 	case 0:
 		emptyHash := emptyHash()
 		return emptyHash, []node.Node{&LeafNode{
-			rawHash: emptyHash,
-			data:    nil,
+			RawHash: emptyHash,
+			Data:    nil,
 		}}
 	case 1:
 		hash := leafHash(items[0])
 		return hash, []node.Node{&LeafNode{
-			rawHash: hash,
-			data:    items[0],
+			RawHash: hash,
+			Data:    items[0],
 		}}
 	default:
 		k := getSplitPoint(int64(len(items)))
-		left, lnodes := computeNodes(items[:k])
-		right, rnodes := computeNodes(items[k:])
+		left, lnodes := ComputeNodes(items[:k])
+		right, rnodes := ComputeNodes(items[k:])
 		parentHash := innerHash(left, right)
 		parentNode := []node.Node{&InnerNode{
 			rawHash: parentHash,
