@@ -75,7 +75,6 @@ if [ $MY_NAME == $PROPOSER ]; then
   go run /tmp/ipld-plugin-experiments/experiments/proposer/main.go
 else
   echo "We are not 'proposer': $MY_NAME"
-  cd /tmp/ipld-plugin-experiments
   go run /tmp/ipld-plugin-experiments/experiments/clients/main.go
 fi
 
