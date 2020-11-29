@@ -1,14 +1,24 @@
 # ipld-plugin-experiments
 
-Just familiarizing myself with the go-ipfs plugin system.
+This repository contains the following:
 
-Packages:
+* merkle (go package): a quickly hacked ipld plugin that uses a very simple merkle tree as a dag to store leaves.
+* terraform: terraform scripts to run experiments on DigitalOcean
 
-* merkle: a quickly hacked ipld plugin that uses a simple merkle tree (instead of a dag) to store leaves.
+**NOTE:** All packages and tools in this repository are highly experimental. Their only purpose is to run cloud-based simulations.
 
-**NOTE 1:** Plugins only work on Linux and MacOS at the moment. You can track the progress of this issue here: https://github.com/golang/go/issues/19282
+There are essentially two simulations/measurements:
+ 1) Measure latency for data availability proofs for a freshly proposed "block" (defaults to 15 random samples in parallel).
+ 2) Measure time for a fresh client to sync n "blocks" (trees) in parallel from a cluster of nodes that have already seen and validated the block (via DA proofs).  
 
-## Building and Installing
+## Run the experiments
+
+TODO short intro; see readme in [terraform](terraform/Readme.md). 
+
+## Building and Installing the ipld-plugin
+
+**Note**: Below steps are not necessary to follow for running the experiments. 
+Test files will be generated on the machine running terraform without installing the plugin.  
 
 You can *build* the example plugin by running `make build`. You can then install it into your local IPFS repo by running `make install`.
 
@@ -26,16 +36,6 @@ To update the go-ipfs, run:
 ```bash
 > make go.mod IPFS_VERSION=version
 ```
-
-## Contribute
-
-Feel free to join in. All welcome. Open an [issue](https://github.com/ipfs/go-ipfs-example-plugin/issues)!
-
-This repository falls under the IPFS [Code of Conduct](https://github.com/ipfs/community/blob/master/code-of-conduct.md).
-
-### Want to hack on IPFS?
-
-[![](https://cdn.rawgit.com/jbenet/contribute-ipfs-gif/master/img/contribute.gif)](https://github.com/ipfs/community/blob/master/CONTRIBUTING.md)
 
 ## License
 

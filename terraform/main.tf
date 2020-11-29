@@ -16,14 +16,19 @@ variable "pvt_key" {
   description = "SSH private key that terraform will use to install stuff on the nodes"
 }
 
-variable "SERVERS" {
+variable "NODES" {
   description = "Number of nodes"
-  default = "4"
+  default = 4
 
   validation {
-    condition     = length(var.SERVERS) > 1
+    condition = var.NODES > 1
     error_message = "You must provision at least two nodes."
   }
+}
+
+variable "SYNC_NODES" {
+  description = "Number of nodes to run second experiment."
+  default = 1
 }
 
 variable "NUM_LEAVES" {
@@ -32,12 +37,12 @@ variable "NUM_LEAVES" {
 
   validation {
     condition = var.NUM_LEAVES == 32 || var.NUM_LEAVES == 64 || var.NUM_LEAVES == 128 || var.NUM_LEAVES == 256
-    error_message = "valid values: 32, 64, 128, 256"
+    error_message = "Valid values are: 32, 64, 128, 256."
   }
 }
 
 variable "ROUNDS" {
-  description = "Number of rounds to run in the experiment"
+  description = "Number of rounds to run in the first experiment"
   default = 100
 }
 
@@ -61,11 +66,12 @@ provider "digitalocean" {
 }
 
 module "cluster" {
-  source           = "./cluster"
-  name             = var.TESTNET_NAME
-  ssh_key          = var.SSH_KEY_FILE
-  pvt_key          = var.pvt_key
-  servers          = var.SERVERS
+  source = "./cluster"
+  name = var.TESTNET_NAME
+  ssh_key = var.SSH_KEY_FILE
+  pvt_key = var.pvt_key
+  nodes = var.NODES
+  sync_nodes = var.SYNC_NODES
 }
 
 output "public_ips" {

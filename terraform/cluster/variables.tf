@@ -9,12 +9,13 @@ variable "regions" {
 }
 
 variable "ssh_key" {
-  description = "SSH key filename to copy to the nodes"
-  type = "string"
+  description = "SSH public key filename to copy to the nodes"
+  type = string
 }
 
 variable "pvt_key" {
   description = "SSH private key for terraform to use to login into the nodes"
+  type = string
 }
 
 variable "instance_size" {
@@ -22,8 +23,13 @@ variable "instance_size" {
   default = "1gb"
 }
 
-variable "servers" {
+variable "nodes" {
   description = "Desired instance count"
   default     = 4
+}
+
+variable "sync_nodes" {
+  description = "Desired sync-nodes instance count for second experiment."
+  default = 1
 }
 

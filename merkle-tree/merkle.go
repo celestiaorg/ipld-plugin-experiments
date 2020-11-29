@@ -55,9 +55,6 @@ func (t TreePlugin) RegisterBlockDecoders(dec node.BlockDecoder) error {
 }
 
 func TreeNodeParser(block blocks.Block) (node.Node, error) {
-	// fmt.Printf("\ncid: %#v\n", block.Cid())
-	// fmt.Printf("Data: %x\n", string(block.RawData()))
-	// fmt.Printf("len(Data): %d\n", len(block.RawData()))
 	data := block.RawData()
 	if len(data) == 0 {
 		return &LeafNode{
@@ -67,15 +64,15 @@ func TreeNodeParser(block blocks.Block) (node.Node, error) {
 	}
 	firstByte := data[:1]
 	if bytes.Equal(firstByte, leafPrefix) {
+		h := block.Cid().Hash()
 		return &LeafNode{
-			// FIXME: CID().Hash() will return the hash code || len(hash) || hash
-			RawHash: block.Cid().Hash(),
+			RawHash: h[2:], // CID().Hash() returns hash-code||len(hash)||hash
 			Data:    data[1:],
 		}, nil
 	} else if bytes.Equal(firstByte, innerPrefix) {
+		h := block.Cid().Hash()
 		return InnerNode{
-			// FIXME: CID().Hash() will return the hash code || len(hash) || hash
-			rawHash: block.Cid().Hash(),
+			rawHash: h[2:], // CID().Hash() returns hash-code||len(hash)||hash
 			l:       data[1:33],
 			r:       data[33:],
 		}, nil
@@ -95,7 +92,7 @@ func TreeLeavesJSONInputParser(r io.Reader, _mhType uint64, _mhLen int) ([]node.
 	for i, share := range shares {
 		input[i] = share.Data
 	}
-	_, nodes := computeNodes(input)
+	_, nodes := ComputeNodes(input)
 	fmt.Println(fmt.Sprintf("length of nodes: %d", len(nodes)))
 	return nodes, nil
 
@@ -197,7 +194,6 @@ type LeafNode struct {
 }
 
 func (l LeafNode) RawData() []byte {
-	//fmt.Printf("leaf-node-Data: %s\n", string(l.Data))
 	return append(leafPrefix, l.Data...)
 }
 
@@ -207,17 +203,15 @@ func (l LeafNode) Cid() cid.Cid {
 		panic(err)
 	}
 	cidV1 := cid.NewCidV1(Tree, mh.Multihash(buf))
-	// fmt.Printf("\nrawHash: %x\n", l.RawHash)
-	// fmt.Printf("leaf-node-cid: %#v\n", cidV1)
 	return cidV1
 }
 
 func (l LeafNode) String() string {
 	return fmt.Sprintf(`
 leaf-node {
-	hash: %x,
-	Data: %s"
-}`, l.RawHash, l.Data)
+	hash: 		%x,
+	len(Data): 	%v
+}`, l.RawHash, len(l.Data))
 }
 
 func (l LeafNode) Loggable() map[string]interface{} {
@@ -283,12 +277,12 @@ type Share struct {
 	Data []byte
 }
 
-type jsonLeaves struct {
+type JsonLeaves struct {
 	Leaves []Share
 }
 
 func parseSharesFromJSON(r io.Reader) ([]Share, error) {
-	var obj jsonLeaves
+	var obj JsonLeaves
 	dec := json.NewDecoder(r)
 	err := dec.Decode(&obj)
 	if err != nil {
@@ -299,7 +293,7 @@ func parseSharesFromJSON(r io.Reader) ([]Share, error) {
 
 // ---- recursively compute the nodes (RFC-6962); used tendermint's implementation as a basis ---- //
 
-func computeNodes(items [][]byte) ([]byte, []node.Node) {
+func ComputeNodes(items [][]byte) ([]byte, []node.Node) {
 	switch len(items) {
 	case 0:
 		emptyHash := emptyHash()
@@ -315,8 +309,8 @@ func computeNodes(items [][]byte) ([]byte, []node.Node) {
 		}}
 	default:
 		k := getSplitPoint(int64(len(items)))
-		left, lnodes := computeNodes(items[:k])
-		right, rnodes := computeNodes(items[k:])
+		left, lnodes := ComputeNodes(items[:k])
+		right, rnodes := ComputeNodes(items[k:])
 		parentHash := innerHash(left, right)
 		parentNode := []node.Node{&InnerNode{
 			rawHash: parentHash,
