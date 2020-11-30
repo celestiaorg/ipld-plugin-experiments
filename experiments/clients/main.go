@@ -67,11 +67,12 @@ func main() {
 			go func() {
 				path := generateRandPath(cid, *numLeaves)
 				ln := &merkle.LeafNode{}
+				log.Printf("Will request path: %s\n", path)
 
 				now := time.Now()
 				err = sh.DagGet(path, ln)
 				if err != nil {
-					log.Println(Result{Err: errors.Wrap(err, fmt.Sprintf("could no get %s from dag", path))})
+					log.Printf("Error while requesting %s from dag: %v", path, err)
 					resChan <- Result{Err: errors.Wrap(err, fmt.Sprintf("could no get %s from dag", path))}
 				} else {
 					elapsed := time.Since(now)
@@ -79,7 +80,6 @@ func main() {
 
 					log.Printf("DagGet %s took: %v\n", path, elapsed)
 				}
-
 			}()
 		}
 		beforeSamples := time.Now()
