@@ -52,7 +52,7 @@ func main() {
 		fmt.Fprintf(os.Stderr, "error while parsing CIDs file: %s.\nShutting down client...", err)
 		os.Exit(1)
 	}
-	fmt.Println("Sleep some time before the first sample request ...")
+	log.Println("Sleep some time before the first sample request ...")
 	time.Sleep(10 * time.Second)
 	log.Println(" ... and we are back. Starting sampling")
 
@@ -60,7 +60,6 @@ func main() {
 	// sh.SetTimeout()
 
 	for _, cid := range cids {
-		// TODO launch a bunch of go-routines
 		resChan := make(chan Result, *numSamples)
 		for sampleIter := 0; sampleIter < *numSamples; sampleIter++ {
 			go func() {
@@ -76,24 +75,26 @@ func main() {
 					elapsed := time.Since(now)
 					resChan <- Result{Elapsed: elapsed}
 
-					fmt.Printf("DagGet %s took: %v\n", path, elapsed)
-					// TODO measure before printing
-
-					fmt.Printf("got leaf: %#v", ln)
+					log.Printf("DagGet %s took: %v\n", path, elapsed)
 				}
 
 			}()
 		}
-
+		beforeSamples := time.Now()
 		for i := 0; i < *numSamples; i++ {
 			select {
 			case msg1 := <-resChan:
+				// TODO collect single results in array
 				fmt.Println("received", msg1)
-				// TODO add timeout
 			}
 		}
+		elapsedDAProof := time.Since(beforeSamples)
+		log.Printf("DA proof for cid %s took: %v\n", cid, elapsedDAProof)
+
+		// TODO write all data into files
+
 		fmt.Println("sleep in between rounds...")
-		time.Sleep(2 * time.Minute)
+		time.Sleep(60 * time.Second)
 	}
 }
 

@@ -71,11 +71,13 @@ sleep 10
 
 MY_NAME=$(hostname)
 if [ $MY_NAME == $PROPOSER ]; then
-  echo "We are 'proposer'"
-  go run /tmp/ipld-plugin-experiments/experiments/proposer/main.go
+  echo "We are 'proposer'. Add trees to local DAG."
+  cd /tmp/ipld-plugin-experiments
+  go run experiments/proposer/main.go -leaf-files=/var/local/testfiles/leaves
 else
-  echo "We are not 'proposer': $MY_NAME"
-  go run /tmp/ipld-plugin-experiments/experiments/clients/main.go
+  echo "We are not 'proposer'. Starting client: $MY_NAME"
+  cd /tmp/ipld-plugin-experiments
+  go run experiments/clients/main.go -cids-file=/var/local/testfiles/cids.json
 fi
 
 
