@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 
 	"github.com/liamsi/ipld-plugin-experiments/merkle-tree"
@@ -55,6 +56,8 @@ func main() {
 		panic(fmt.Sprintf("could not write test file: %v", err))
 	}
 
+	log.Println("Done generating testfiles.")
+	log.Printf("Generated %v trees with %v leafs.\n", *numTrees, *numLeaves)
 }
 
 func generateLeavesJSON(num int) *merkle.JsonLeaves {

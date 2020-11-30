@@ -33,3 +33,11 @@ variable "sync_nodes" {
   default = 1
 }
 
+variable "rounds" {
+  description = "Number of rounds to sample DA proofs (should "
+  default = 100
+}
+
+variable "num_leaves" {
+  default = 32
+}

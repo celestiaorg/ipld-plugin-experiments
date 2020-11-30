@@ -25,7 +25,7 @@ resource "digitalocean_droplet" "cluster" {
   }
 
   provisioner "local-exec" {
-    command = "cluster/testfiles.sh"
+    command = "cluster/testfiles.sh ./testfiles ${var.num_leaves} ${var.rounds}"
   }
 
   provisioner "file" {
@@ -39,7 +39,7 @@ resource "digitalocean_droplet" "cluster" {
       "echo 'ClientAliveInterval 120' >> /etc/ssh/sshd_config",
       "echo 'ClientAliveCountMax 720' >> /etc/ssh/sshd_config",
       "chmod +x /tmp/ipfs/bootstrap.sh",
-      "/tmp/ipfs/bootstrap.sh ${var.name}-proposer",
+      "/tmp/ipfs/bootstrap.sh ${var.name}-proposer ${var.rounds}",
     ]
   }
 

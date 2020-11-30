@@ -69,7 +69,7 @@ func main() {
 				now := time.Now()
 				err = sh.DagGet(path, ln)
 				if err != nil {
-					fmt.Println(Result{Err: errors.Wrap(err, fmt.Sprintf("could no get %s from dag", path))})
+					log.Println(Result{Err: errors.Wrap(err, fmt.Sprintf("could no get %s from dag", path))})
 					resChan <- Result{Err: errors.Wrap(err, fmt.Sprintf("could no get %s from dag", path))}
 				} else {
 					elapsed := time.Since(now)
@@ -85,7 +85,7 @@ func main() {
 			select {
 			case msg1 := <-resChan:
 				// TODO collect single results in array
-				fmt.Println("received", msg1)
+				log.Println("received", msg1)
 			}
 		}
 		elapsedDAProof := time.Since(beforeSamples)
@@ -94,7 +94,7 @@ func main() {
 		// TODO write all data into files
 
 		fmt.Println("sleep in between rounds...")
-		time.Sleep(60 * time.Second)
+		time.Sleep(30 * time.Second)
 	}
 }
 

@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	"path"
 	"time"
@@ -15,7 +16,7 @@ var defaultDuration time.Duration
 
 func init() {
 	var err error
-	defaultDuration, err = time.ParseDuration("250ms")
+	defaultDuration, err = time.ParseDuration("25ms")
 	if err != nil {
 		panic(err)
 	}
@@ -43,7 +44,8 @@ func main() {
 			fmt.Fprintf(os.Stderr, "error while putting into dag: %s.\nShutting down proposer...", err)
 			os.Exit(1)
 		}
-		fmt.Printf("added %s", cid)
+
+		log.Printf("added %s\n", cid)
 
 		time.Sleep(*blockTime)
 	}

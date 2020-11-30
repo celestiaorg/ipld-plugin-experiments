@@ -72,6 +72,8 @@ module "cluster" {
   pvt_key = var.pvt_key
   nodes = var.NODES
   sync_nodes = var.SYNC_NODES
+  rounds = var.ROUNDS
+  num_leaves = var.NUM_LEAVES
 }
 
 output "public_ips" {
