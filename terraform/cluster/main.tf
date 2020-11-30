@@ -59,40 +59,39 @@ resource "digitalocean_droplet" "cluster" {
 }
 
 # provisions a fresh node and run second experiment: measure time to sync 'blocks' from the network (above cluster)
-resource "digitalocean_droplet" "sync-experiment" {
-  name = "sync-node"
-  image = "ubuntu-20-10-x64"
-  size = var.instance_size
-  region = element(var.regions, 0) # always pick the first region
-  ssh_keys = [
-    digitalocean_ssh_key.cluster.id]
-  tags = [
-    digitalocean_tag.cluster.id]
-  count = var.sync_nodes
-
-  depends_on = [digitalocean_droplet.cluster]
-
-  provisioner "file" {
-    source = "ipfs"
-    destination = "/tmp"
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "chmod +x /tmp/ipfs/bootstrap.sh",
-      "/tmp/ipfs/bootstrap.sh",
-    ]
-  }
-
-  connection {
-    host = self.ipv4_address
-    user = "root"
-    type = "ssh"
-    private_key = file(var.pvt_key)
-    timeout = "2m"
-  }
-
-}
+//resource "digitalocean_droplet" "sync-experiment" {
+//  name = "sync-node"
+//  image = "ubuntu-20-10-x64"
+//  size = var.instance_size
+//  region = element(var.regions, 0) # always pick the first region
+//  ssh_keys = [
+//    digitalocean_ssh_key.cluster.id]
+//  tags = [
+//    digitalocean_tag.cluster.id]
+//  count = var.sync_nodes
+//
+//  depends_on = [digitalocean_droplet.cluster]
+//
+//  provisioner "file" {
+//    source = "ipfs"
+//    destination = "/tmp"
+//  }
+//
+//  provisioner "remote-exec" {
+//    inline = [
+//      "chmod +x /tmp/ipfs/bootstrap.sh",
+//      "/tmp/ipfs/bootstrap.sh",
+//    ]
+//  }
+//
+//  connection {
+//    host = self.ipv4_address
+//    user = "root"
+//    type = "ssh"
+//    private_key = file(var.pvt_key)
+//    timeout = "2m"
+//  }
+//}
 
 resource "null_resource" "collect_data" {
   provisioner "local-exec" {
@@ -101,7 +100,8 @@ resource "null_resource" "collect_data" {
   }
   depends_on = [
     digitalocean_droplet.cluster,
-    digitalocean_droplet.sync-experiment,
+    # TODO: uncomment to run sync-experiment:
+    // digitalocean_droplet.sync-experiment,
   ]
 }
 
