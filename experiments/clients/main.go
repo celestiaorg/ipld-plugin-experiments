@@ -56,9 +56,11 @@ func main() {
 	time.Sleep(10 * time.Second)
 	log.Println(" ... and we are back. Starting sampling")
 
-	sh := shell.NewShell("localhost:5001")
-	// sh.SetTimeout()
-
+	sh := shell.NewLocalShell()
+	if sh == nil {
+		log.Println("ipfs is not running properly. Shutting down...")
+		os.Exit(1)
+	}
 	for _, cid := range cids {
 		resChan := make(chan Result, *numSamples)
 		for sampleIter := 0; sampleIter < *numSamples; sampleIter++ {

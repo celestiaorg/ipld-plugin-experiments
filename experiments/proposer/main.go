@@ -32,7 +32,11 @@ func main() {
 
 	flag.Parse()
 
-	sh := shell.NewShell("localhost:5001")
+	sh := shell.NewLocalShell()
+	if sh == nil {
+		log.Println("ipfs is not running properly. Shutting down...")
+		os.Exit(1)
+	}
 	for treeIter := 0; treeIter < *numTrees; treeIter++ {
 		leafFile := path.Join(*leavesDir, fmt.Sprintf("%v.json", treeIter))
 		d, err := ioutil.ReadFile(leafFile)
