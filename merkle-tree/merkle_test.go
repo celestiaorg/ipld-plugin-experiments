@@ -2,7 +2,6 @@ package merkle
 
 import (
 	"bytes"
-	"crypto/rand"
 	"testing"
 
 	shell "github.com/ipfs/go-ipfs-api"
@@ -29,15 +28,5 @@ func TestComputeNodesCIDEqualsNode0(t *testing.T) {
 	if cid != treeCidStr {
 		t.Fatal("Don't match")
 	}
-}
-
-func generateLeavesJSON(num int) *JsonLeaves {
-	var leafLength = 256
-	leavesData := make([]Share, num)
-	for i := 0; i < len(leavesData); i++ {
-		data := make([]byte, leafLength)
-		rand.Read(data)
-		leavesData[i] = Share{Data: data}
-	}
-	return &JsonLeaves{Leaves: leavesData}
+	t.Logf("cid: %v\n", cid)
 }

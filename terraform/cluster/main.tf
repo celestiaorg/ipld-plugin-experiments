@@ -7,6 +7,12 @@ resource "digitalocean_ssh_key" "cluster" {
   public_key = file(var.ssh_key)
 }
 
+resource "null_resource" "generate_testdata" {
+  provisioner "local-exec" {
+    command = "cluster/testfiles.sh ./testfiles ${var.num_leaves} ${var.rounds}"
+  }
+}
+
 # provisions all nodes and runs first experiment which measures latency to sample DA proofs
 resource "digitalocean_droplet" "cluster" {
   name = count.index == 0 ? "${var.name}-proposer" : "${var.name}-node-${count.index}"
@@ -18,20 +24,20 @@ resource "digitalocean_droplet" "cluster" {
   count = var.nodes
   tags = [
     digitalocean_tag.cluster.id]
+  # Generate testdata only once:
+  depends_on = [
+    null_resource.generate_testdata]
 
   provisioner "file" {
     source = "ipfs"
     destination = "/tmp"
   }
 
-  provisioner "local-exec" {
-    command = "cluster/testfiles.sh ./testfiles ${var.num_leaves} ${var.rounds}"
-  }
-
   provisioner "file" {
     source = "testfiles"
     destination = "/var/local/"
   }
+
 
   provisioner "remote-exec" {
     inline = [
