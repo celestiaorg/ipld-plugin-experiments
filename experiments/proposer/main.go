@@ -31,7 +31,7 @@ func main() {
 
 	flag.Parse()
 
-	sh := shell.NewLocalShell()
+	sh := shell.NewShell("localhost:5001")
 	for treeIter := 0; treeIter < *numTrees; treeIter++ {
 		leafFile := path.Join(*leavesDir, fmt.Sprintf("%v.json", treeIter))
 		d, err := ioutil.ReadFile(leafFile)

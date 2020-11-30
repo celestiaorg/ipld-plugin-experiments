@@ -56,7 +56,7 @@ func main() {
 	time.Sleep(10 * time.Second)
 	log.Println(" ... and we are back. Starting sampling")
 
-	sh := shell.NewLocalShell()
+	sh := shell.NewShell("localhost:5001")
 	// sh.SetTimeout()
 
 	for _, cid := range cids {
