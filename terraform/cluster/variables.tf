@@ -41,3 +41,13 @@ variable "rounds" {
 variable "num_leaves" {
   default = 32
 }
+
+variable "remote_outdir" {
+  description = "Absolute path to store measured data on the nodes."
+  default = "/var/local/measurements"
+}
+
+variable "local_outdir" {
+  description = "Path to store all measured data from the nodes locally."
+  default = "~/ipfs-experiments/measurements"
+}

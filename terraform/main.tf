@@ -11,6 +11,8 @@ module "cluster" {
   sync_nodes = var.SYNC_NODES
   rounds = var.ROUNDS
   num_leaves = var.NUM_LEAVES
+  remote_outdir = var.REMOTE_OUTDIR
+  local_outdir = var.LOCAL_OUTDIR
 }
 
 output "public_ips" {

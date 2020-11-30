@@ -8,6 +8,7 @@ import (
 	"log"
 	"math/rand"
 	"os"
+	"path"
 	"strings"
 	"time"
 
@@ -33,12 +34,17 @@ func main() {
 	cidFile := flag.String("cids-file", "testfiles/cids.json", "File with the CIDs (tree roots) to sample paths for.")
 	numLeaves := flag.Int("num-leaves", 32, "Number of leaves. Will be used to determine the paths to sample.")
 	numSamples := flag.Int("num-samples", 15, "Number of samples per block/tree. Each sample will run in a go-routine.")
+	outDir := flag.String("out-dir", "ipfs-experiment-results", "Directory to save measurements to.")
 
 	flag.Parse()
 
 	if _, ok := binFormattingMap[*numLeaves]; !ok {
 		fmt.Fprintf(os.Stderr, "Invalid number of leaves. Should be a power of two <= 256.\nShutting down client...")
 		os.Exit(1)
+	}
+
+	if _, err := os.Stat(*outDir); os.IsNotExist(err) {
+		os.Mkdir(*outDir, os.ModePerm)
 	}
 
 	cids := make([]string, 0)
@@ -61,7 +67,9 @@ func main() {
 		log.Println("ipfs is not running properly. Shutting down...")
 		os.Exit(1)
 	}
-	for _, cid := range cids {
+	daProofLatency := make([]time.Duration, len(cids))
+	singleSamplesLatency := make([]time.Duration, *numSamples*len(cids))
+	for cidIter, cid := range cids {
 		resChan := make(chan Result, *numSamples)
 		for sampleIter := 0; sampleIter < *numSamples; sampleIter++ {
 			go func() {
@@ -82,21 +90,47 @@ func main() {
 				}
 			}()
 		}
+
 		beforeSamples := time.Now()
 		for i := 0; i < *numSamples; i++ {
 			select {
 			case msg1 := <-resChan:
-				// TODO collect single results in array
+				singleSamplesLatency[i*(cidIter+1)] = msg1.Elapsed
 				log.Println("received", msg1)
 			}
 		}
 		elapsedDAProof := time.Since(beforeSamples)
 		log.Printf("DA proof for cid %s took: %v\n", cid, elapsedDAProof)
-
-		// TODO write all data into files
-
+		daProofLatency[cidIter] = elapsedDAProof
 		fmt.Println("sleep in between rounds...")
-		time.Sleep(30 * time.Second)
+		//time.Sleep(30 * time.Second) // TODO make this configurable too
+	}
+
+	// Write results:
+	sampleLatencyFile, err := os.Create(path.Join(*outDir, "sample_latencies.json"))
+	defer sampleLatencyFile.Close()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error while creating file: %s.", err)
+		os.Exit(1)
+	}
+	encoder := json.NewEncoder(sampleLatencyFile)
+	err = encoder.Encode(&singleSamplesLatency)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error while writing latencies to file: %s.", err)
+		os.Exit(1)
+	}
+
+	daProofLatencies, err := os.Create(path.Join(*outDir, "da_proof_latencies.json"))
+	defer daProofLatencies.Close()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error while creating file: %s.", err)
+		os.Exit(1)
+	}
+	encoder = json.NewEncoder(daProofLatencies)
+	err = encoder.Encode(&daProofLatency)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error while writing latencies to file: %s.", err)
+		os.Exit(1)
 	}
 }
 
