@@ -103,7 +103,7 @@ func main() {
 		log.Printf("DA proof for cid %s took: %v\n", cid, elapsedDAProof)
 		daProofLatency[cidIter] = elapsedDAProof
 		fmt.Println("sleep in between rounds...")
-		//time.Sleep(30 * time.Second) // TODO make this configurable too
+		time.Sleep(30 * time.Second) // TODO make this configurable too
 	}
 
 	// Write results:

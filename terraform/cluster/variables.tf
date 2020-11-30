@@ -49,5 +49,5 @@ variable "remote_outdir" {
 
 variable "local_outdir" {
   description = "Path to store all measured data from the nodes locally."
-  default = "~/ipfs-experiments/measurements"
+  default = "ipfs-experiments-results/measurements"
 }

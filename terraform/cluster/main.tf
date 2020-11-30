@@ -13,8 +13,18 @@ resource "null_resource" "generate_testdata" {
   }
 }
 
+resource "null_resource" "prep_local_outdir" {
+  provisioner "local-exec" {
+    command = "mkdir -p ${var.local_outdir}"
+  }
+}
+
 # provisions all nodes and runs first experiment which measures latency to sample DA proofs
 resource "digitalocean_droplet" "cluster" {
+  # TODO it's probably better to split out provisioning the proposer separately
+  # and then spin up the clients afterwards.
+  # The distinction between client nodes and proposer in scripts
+  # is currently achieved via the hostname:
   name = count.index == 0 ? "${var.name}-proposer" : "${var.name}-node-${count.index}"
   image = "ubuntu-20-10-x64"
   size = var.instance_size
@@ -45,8 +55,14 @@ resource "digitalocean_droplet" "cluster" {
       "echo 'ClientAliveInterval 120' >> /etc/ssh/sshd_config",
       "echo 'ClientAliveCountMax 720' >> /etc/ssh/sshd_config",
       "chmod +x /tmp/ipfs/bootstrap.sh",
-      "/tmp/ipfs/bootstrap.sh ${var.name}-proposer ${var.rounds}",
+      "mkdir -p ${var.remote_outdir}",
+      "/tmp/ipfs/bootstrap.sh ${var.name}-proposer ${var.rounds} ${var.remote_outdir}",
     ]
+  }
+
+  provisioner "local-exec" {
+    # scp data from each node
+    command = "scp -rp -B -o 'StrictHostKeyChecking no' -i ${var.pvt_key} root@${self.ipv4_address}:${var.remote_outdir} ${var.local_outdir}/${self.name} && exit 0"
   }
 
   connection {
@@ -54,7 +70,7 @@ resource "digitalocean_droplet" "cluster" {
     user = "root"
     type = "ssh"
     private_key = file(var.pvt_key)
-    timeout = "2m"
+    timeout = "10m"
   }
 }
 
@@ -93,15 +109,29 @@ resource "digitalocean_droplet" "cluster" {
 //  }
 //}
 
-resource "null_resource" "collect_data" {
-  provisioner "local-exec" {
-    # TODO scp plots/data from each node
-    command = "echo 'Such data'"
-  }
-  depends_on = [
-    digitalocean_droplet.cluster,
-    # TODO: uncomment to run sync-experiment:
-    // digitalocean_droplet.sync-experiment,
-  ]
-}
+//locals {
+//  ips = {
+//    for node in digitalocean_droplet.cluster :
+//    node.id => node.ipv4_address
+//    if node.name != "${var.name}-proposer"
+//  }
+//
+//  depends_on = [
+//    digitalocean_droplet.cluster,
+//  ]
+//}
+
+//resource "null_resource" "collect_data" {
+//  for_each = local.ips
+//
+//  provisioner "local-exec" {
+//    # scp data from each node
+//    command = "scp -rp -B -o 'StrictHostKeyChecking no' -i ${var.pvt_key} root@${each.value}:${var.remote_outdir} ${var.local_outdir}/${each.value}"
+//  }
+//  depends_on = [
+//    digitalocean_droplet.cluster,
+//    # TODO: uncomment to run sync-experiment:
+//    // digitalocean_droplet.sync-experiment,
+//  ]
+//}
 

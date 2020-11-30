@@ -6,6 +6,7 @@ default_rounds=100
 # Take in the hostname of the 'proposer' -  the node that adds the whole tree DAG locally
 PROPOSER=$1
 NUM_ROUNDS=${2:-$default_rounds}
+OUT_DIR=${3:-"/var/local/measurements"}
 
 IPFS_VERSION=0.7.0
 
@@ -80,7 +81,7 @@ if [ $MY_NAME == $PROPOSER ]; then
 else
   echo "We are not 'proposer'. Starting client: $MY_NAME"
   cd /tmp/ipld-plugin-experiments
-  go run experiments/clients/main.go -cids-file=/var/local/testfiles/cids.json
+  go run experiments/clients/main.go -cids-file=/var/local/testfiles/cids.json -out-dir=$OUT_DIR
 fi
 
 
