@@ -41,6 +41,7 @@ git clone https://github.com/ipfs/go-ipfs.git
 cd go-ipfs
 git checkout tags/v${IPFS_VERSION} -b v${IPFS_VERSION}
 make install
+cp $GOPATH/bin/ipfs /usr/local/bin
 # This would be faster than the above but we'll bump into: https://github.com/golang/go/issues/27751
 # wget "https://dist.ipfs.io/go-ipfs/v${IPFS_VERSION}/go-ipfs_v${IPFS_VERSION}_linux-amd64.tar.gz"
 # tar xvfz "go-ipfs_v${IPFS_VERSION}_linux-amd64.tar.gz"
