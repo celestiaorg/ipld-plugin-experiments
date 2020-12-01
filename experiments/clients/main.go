@@ -59,7 +59,7 @@ func main() {
 		os.Exit(1)
 	}
 	log.Println("Sleep some time before the first sample request ...")
-	time.Sleep(10 * time.Second)
+	time.Sleep(180 * time.Second)
 	log.Println(" ... and we are back. Starting sampling")
 
 	sh := shell.NewLocalShell()
