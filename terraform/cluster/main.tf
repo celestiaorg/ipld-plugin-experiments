@@ -56,7 +56,7 @@ resource "digitalocean_droplet" "cluster" {
       "echo 'ClientAliveCountMax 720' >> /etc/ssh/sshd_config",
       "chmod +x /tmp/ipfs/bootstrap.sh",
       "mkdir -p ${var.remote_outdir}",
-      "/tmp/ipfs/bootstrap.sh ${var.name}-proposer ${var.rounds} ${var.remote_outdir}",
+      "/tmp/ipfs/bootstrap.sh ${var.name}-proposer ${var.rounds} ${var.num_leaves} ${var.remote_outdir}",
     ]
   }
 

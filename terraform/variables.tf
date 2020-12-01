@@ -34,11 +34,14 @@ variable "SYNC_NODES" {
 variable "NUM_LEAVES" {
   description = "Number of leaves to be used in experiment."
   default = 32
+  type = number
 
-  validation {
-    condition = var.NUM_LEAVES == 32 || var.NUM_LEAVES == 64 || var.NUM_LEAVES == 128 || var.NUM_LEAVES == 256
-    error_message = "Valid values are: 32, 64, 128, 256."
-  }
+  // For reasons I don't understand this validation does not allow to pass in a valid leaf count:
+  // e.g.  -var="NUM_LEAVES=32" fails :-/
+  //  validation {
+  //    condition = var.NUM_LEAVES == 32 || var.NUM_LEAVES == 64 || var.NUM_LEAVES == 128 || var.NUM_LEAVES == 256
+  //    error_message = "Valid values are: 32, 64, 128, 256."
+  //  }
 }
 
 variable "ROUNDS" {
