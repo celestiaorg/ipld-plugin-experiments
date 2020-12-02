@@ -11,7 +11,7 @@ variable "regions" {
     "FRA1",
     "NYC3",
     "BLR1",
-    "SFO1",
+    "SFO2",
     "NYC2",
     "SFO2",
     "SGP1",
