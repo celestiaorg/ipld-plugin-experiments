@@ -71,25 +71,14 @@ func main() {
 	daProofLatency := make([]time.Duration, len(cids))
 	singleSamplesLatency := make([]time.Duration, *numSamples*len(cids))
 	for cidIter, cid := range cids {
+		seenPaths := map[string]struct{}{}
 		resChan := make(chan Result, *numSamples)
 		for sampleIter := 0; sampleIter < *numSamples; sampleIter++ {
-			go func() {
-				path := generateRandPath(cid, *numLeaves)
-				ln := &merkle.LeafNode{}
-				log.Printf("Will request path: %s\n", path)
-
-				now := time.Now()
-				err = sh.DagGet(path, ln)
-				if err != nil {
-					log.Printf("Error while requesting %s from dag: %v", path, err)
-					resChan <- Result{Err: errors.Wrap(err, fmt.Sprintf("could no get %s from dag", path))}
-				} else {
-					elapsed := time.Since(now)
-					resChan <- Result{Elapsed: elapsed}
-
-					log.Printf("DagGet %s took: %v\n", path, elapsed)
-				}
-			}()
+			// if not used properly this will cause an endless loop
+			// (e.g. numSamples > #paths in tree == 2^numLeaves)
+			path := generateUntriedRandPath(cid, *numLeaves, seenPaths)
+			seenPaths[path] = struct{}{}
+			go sampleLeaf(path, sh, resChan)
 		}
 
 		beforeSamples := time.Now()
@@ -140,7 +129,36 @@ func main() {
 	}
 }
 
-func generateRandPath(cid string, numLeaves int) string {
+func sampleLeaf(path string, sh *shell.Shell, resChan chan Result) (error, chan Result) {
+
+	ln := &merkle.LeafNode{}
+	log.Printf("Will request path: %s\n", path)
+
+	now := time.Now()
+	err := sh.DagGet(path, ln)
+	if err != nil {
+		log.Printf("Error while requesting %s from dag: %v", path, err)
+		resChan <- Result{Err: errors.Wrap(err, fmt.Sprintf("could no get %s from dag", path))}
+	} else {
+		elapsed := time.Since(now)
+		resChan <- Result{Elapsed: elapsed}
+
+		log.Printf("DagGet %s took: %v\n", path, elapsed)
+	}
+	return err, resChan
+}
+
+func generateUntriedRandPath(cid string, numLeaves int, seenPaths map[string]struct{}) string {
+	path := generatePath(cid, numLeaves)
+	_, alreadySeen := seenPaths[path]
+	for alreadySeen {
+		path = generatePath(cid, numLeaves)
+		_, alreadySeen = seenPaths[path]
+	}
+	return path
+}
+
+func generatePath(cid string, numLeaves int) string {
 	idx := rand.Intn(numLeaves)
 	fmtDirective := binFormattingMap[numLeaves]
 	bin := fmt.Sprintf(fmtDirective, idx)
