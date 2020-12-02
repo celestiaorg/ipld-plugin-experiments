@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math"
 	"math/rand"
 	"os"
 	"path"
@@ -95,7 +96,12 @@ func main() {
 		for i := 0; i < *numSamples; i++ {
 			select {
 			case msg1 := <-resChan:
-				singleSamplesLatency[i*(cidIter+1)] = msg1.Elapsed
+				if msg1.Err != nil {
+					// If there was an error, we use the max allowed Duration instead.
+					singleSamplesLatency[i*(cidIter+1)] = math.MaxInt64
+				} else {
+					singleSamplesLatency[i*(cidIter+1)] = msg1.Elapsed
+				}
 				log.Println("received", msg1)
 			}
 		}
