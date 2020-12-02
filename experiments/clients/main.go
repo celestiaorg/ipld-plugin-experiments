@@ -69,7 +69,7 @@ func main() {
 		os.Exit(1)
 	}
 	daProofLatency := make([]time.Duration, len(cids))
-	singleSamplesLatency := make([]time.Duration, *numSamples*len(cids))
+	singleSamplesLatency := make([]time.Duration, 0)
 	for cidIter, cid := range cids {
 		seenPaths := map[string]struct{}{}
 		resChan := make(chan Result, *numSamples)
@@ -87,9 +87,9 @@ func main() {
 			case msg1 := <-resChan:
 				if msg1.Err != nil {
 					// If there was an error, we use the max allowed Duration instead.
-					singleSamplesLatency[i*(cidIter+1)] = math.MaxInt64
+					singleSamplesLatency = append(singleSamplesLatency, math.MaxInt64)
 				} else {
-					singleSamplesLatency[i*(cidIter+1)] = msg1.Elapsed
+					singleSamplesLatency = append(singleSamplesLatency, msg1.Elapsed)
 				}
 				log.Println("received", msg1)
 			}

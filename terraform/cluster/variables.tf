@@ -6,9 +6,9 @@ variable "regions" {
   description = "Regions to launch in"
   type = list
   default = [
+    "LON1",
     "AMS3",
     "FRA1",
-    "LON1",
     "NYC3",
     "BLR1",
     "SFO1",
