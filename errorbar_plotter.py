@@ -11,7 +11,7 @@ file_pattern = "dag-experiments-node-{}/sample_latencies.json"
 
 for iter in range(num_nodes):
     try:
-        file = dir + file_pattern.format(iter + 1)
+        file = dir + file_pattern.format(iter)
         print(file)
         sample_latencies_df = pd.read_json(file)
         grouped = sample_latencies_df.groupby(sample_latencies_df.index // group_num)
