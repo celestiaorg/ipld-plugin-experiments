@@ -56,8 +56,6 @@ resource "digitalocean_droplet" "proposer" {
       "echo 'ClientAliveCountMax 720' >> /etc/ssh/sshd_config",
       "chmod +x /tmp/ipfs/bootstrap.sh",
       "/tmp/ipfs/bootstrap.sh",
-      "/tmp/ipfs/dag-puts.sh ${var.rounds}",
-      # add dags locally
     ]
   }
 
@@ -70,24 +68,25 @@ resource "digitalocean_droplet" "proposer" {
   }
 }
 
+locals {
+  proposer_ip = digitalocean_droplet.proposer[0].ipv4_address
+}
+
 # provisions all other
 resource "digitalocean_droplet" "clients-cluster" {
   # TODO it's probably better to split out provisioning the proposer separately
   # and then spin up the clients afterwards.
   # The distinction between client nodes and proposer in scripts
   # is currently achieved via the hostname:
-  name   = "${var.name}-node-${count.index}"
-  image  = "ubuntu-20-10-x64"
-  size   = var.instance_size
-  region = element(var.regions, count.index)
-  ssh_keys = [
-  digitalocean_ssh_key.cluster.id]
-  count = var.nodes
-
-  tags = [
-  digitalocean_tag.cluster.id]
-  depends_on = [
-  digitalocean_droplet.proposer]
+  name     = "${var.name}-node-${count.index}"
+  image    = "ubuntu-20-10-x64"
+  size     = var.instance_size
+  region   = element(var.regions, count.index)
+  ssh_keys = [digitalocean_ssh_key.cluster.id]
+  count    = var.nodes
+  tags     = [digitalocean_tag.cluster.id]
+  # uncomment if you don't want the client cluster and the proposer to be bootstrapped in parallel:
+  # depends_on = [digitalocean_droplet.proposer]
 
   provisioner "file" {
     source      = "ipfs"
@@ -119,6 +118,23 @@ resource "digitalocean_droplet" "clients-cluster" {
   }
 }
 
+resource "null_resource" "call-dag-puts-on-proposer" {
+  connection {
+    host        = local.proposer_ip
+    user        = "root"
+    type        = "ssh"
+    private_key = file(var.pvt_key)
+    timeout     = "10m"
+  }
+  provisioner "remote-exec" {
+    inline = [
+      # add dags locally:
+      "chmod +x /tmp/ipfs/dag-puts.sh",
+      "/tmp/ipfs/dag-puts.sh ${var.rounds}",
+    ]
+  }
+}
+
 locals {
   names = digitalocean_droplet.clients-cluster.*.name
   ips   = digitalocean_droplet.clients-cluster.*.ipv4_address
@@ -136,6 +152,7 @@ resource "null_resource" "run-clients-measurements" {
   }
   provisioner "remote-exec" {
     inline = [
+      "chmod +x /tmp/ipfs/measure-dag-get-latencies.sh",
       "/tmp/ipfs/measure-dag-get-latencies.sh ${var.rounds} ${var.num_leaves} ${var.remote_outdir}",
     ]
   }
@@ -145,7 +162,9 @@ resource "null_resource" "run-clients-measurements" {
     command = "scp -rp -B -o 'StrictHostKeyChecking no' -i ${var.pvt_key} root@${local.ips[count.index]}:${var.remote_outdir} ${var.local_outdir}/${local.names[count.index]}"
   }
   depends_on = [
-  digitalocean_droplet.clients-cluster]
+    null_resource.call-dag-puts-on-proposer,
+    digitalocean_droplet.clients-cluster,
+  ]
 }
 
 # provisions a fresh node and run second experiment: measure time to sync 'blocks' from the network (above cluster)

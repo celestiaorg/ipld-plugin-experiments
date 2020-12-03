@@ -9,6 +9,7 @@ NUM_ROUNDS=${1:-$default_rounds}
 NUM_LEAVES=${2:-$default_leaves}
 OUT_DIR=${3:-"~/ipfs-experiments/measurements"}
 
+source ~/.profile
 
 echo "We are not 'proposer'. Starting client: $MY_NAME"
 cd /tmp/ipld-plugin-experiments
