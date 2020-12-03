@@ -1,17 +1,28 @@
 import sys
 
 import pandas as pd
-import matplotlib.pylab as plt
-from matplotlib.pylab import show
+import matplotlib.pyplot as plt
 
+dir = sys.argv[1]
 group_num = int(sys.argv[2])
-sample_latencies_df = pd.read_json(sys.argv[1])
+num_nodes = int(sys.argv[3])
 
-grouped = sample_latencies_df.groupby(sample_latencies_df.index // group_num)
-grouped = grouped[0]
-indices = grouped.groups.keys()
-mean = grouped.mean()
+file_pattern = "dag-experiments-node-{}/sample_latencies.json"
 
-plt.errorbar(x=indices, y=mean, yerr=grouped.max() - grouped.min(), fmt='o')
-
-show()
+for iter in range(num_nodes):
+    try:
+        file = dir + file_pattern.format(iter + 1)
+        print(file)
+        sample_latencies_df = pd.read_json(file)
+        grouped = sample_latencies_df.groupby(sample_latencies_df.index // group_num)
+        grouped = grouped[0]
+        indices = grouped.groups.keys()
+        mean = grouped.mean()
+        plt.errorbar(x=indices, y=mean, yerr=grouped.max() - grouped.min(), fmt='o')
+        plt.savefig(file + '.pdf')
+        # plt.show()
+    except:
+        print()
+        print("Exception:", sys.exc_info()[0], "occurred.")
+        print("Next file.")
+        print()
