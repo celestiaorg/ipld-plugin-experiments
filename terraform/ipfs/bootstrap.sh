@@ -2,14 +2,6 @@
 
 set -e
 
-default_rounds=100
-default_leaves=32
-# Take in the hostname of the 'proposer' -  the node that adds the whole tree DAG locally
-PROPOSER=$1
-NUM_ROUNDS=${2:-$default_rounds}
-NUM_LEAVES=${3:-$default_leaves}
-OUT_DIR=${4:-"/var/local/measurements"}
-
 IPFS_VERSION=0.7.0
 
 # Wait for cloud-init to complete
@@ -75,16 +67,6 @@ until [[ `ipfs id >/dev/null 2>&1; echo $?` -eq 0 ]]; do
 done
 sleep 10
 
-MY_NAME=$(hostname)
-if [ $MY_NAME == $PROPOSER ]; then
-  echo "We are 'proposer'. Add trees to local DAG."
-  cd /tmp/ipld-plugin-experiments
-  go run experiments/proposer/main.go -leaf-files=/var/local/testfiles/leaves -num-trees=$NUM_ROUNDS
-else
-  echo "We are not 'proposer'. Starting client: $MY_NAME"
-  cd /tmp/ipld-plugin-experiments
-  go run experiments/clients/main.go -cids-file=/var/local/testfiles/cids.json -num-leaves=$NUM_LEAVES -out-dir=$OUT_DIR
-fi
-
+echo "Done setting up test environment."
 
 exit 0
