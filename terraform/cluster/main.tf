@@ -129,9 +129,6 @@ resource "null_resource" "call-dag-puts-on-proposer" {
   provisioner "remote-exec" {
     inline = [
       # add dags locally:
-      # https://github.com/hashicorp/terraform/issues/18517#issuecomment-415023605
-      "echo 'ClientAliveInterval 120' >> /etc/ssh/sshd_config",
-      "echo 'ClientAliveCountMax 720' >> /etc/ssh/sshd_config",
       "chmod +x /tmp/ipfs/dag-puts.sh",
       "/tmp/ipfs/dag-puts.sh ${var.rounds}",
     ]
@@ -155,9 +152,6 @@ resource "null_resource" "run-clients-measurements" {
   }
   provisioner "remote-exec" {
     inline = [
-      # https://github.com/hashicorp/terraform/issues/18517#issuecomment-415023605
-      "echo 'ClientAliveInterval 120' >> /etc/ssh/sshd_config",
-      "echo 'ClientAliveCountMax 720' >> /etc/ssh/sshd_config",
       "chmod +x /tmp/ipfs/measure-dag-get-latencies.sh",
       "/tmp/ipfs/measure-dag-get-latencies.sh ${var.rounds} ${var.num_leaves} ${var.remote_outdir}",
     ]

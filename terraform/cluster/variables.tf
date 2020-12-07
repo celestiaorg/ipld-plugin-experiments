@@ -12,7 +12,7 @@ variable "regions" {
     "NYC3",
     "BLR1",
     "SFO2",
-    "NYC2",
+    "NYC3",
     "SFO2",
     "SGP1",
     "TOR1",
