@@ -44,7 +44,7 @@ variable "pvt_key" {
 
 variable "instance_size" {
   description = "The instance size to use"
-  default = "1gb"
+  default = "s-1vcpu-1gb"
 }
 
 variable "nodes" {
