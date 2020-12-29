@@ -1,14 +1,31 @@
 import sys
 import os
-from collections import Counter
+
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.ticker as tick
-import matplotlib.mlab as mlab
 import matplotlib.backends.backend_pdf
 
-regions = ["LON1", "AMS3", "FRA1", "NYC3", "BLR1", "SFO2", "NYC3-2", "SFO2-2", "SGP1", "TOR1", "AMS3-2", "FRA1", "LON1", "NYC3", "SFO2", "SGP1", "TOR1", "AMS3", "FRA1", "LON1", "NYC3", "SFO2", "SGP1", "TOR1"]
+# preserve the order of the list, but make each member unique by adding an index
+def parse_default_regions(regions):
+    out = []
+    counts = {}
+    for region in regions:
+        if region in counts:
+            counts[region] = counts[region] + 1
+        else:
+            counts[region] = 1
+        out.append("{}-{}".format(region, counts[region]))
+    return out
+
+# todo(evan): don't hard-code regions
+# use the default regions found in ./terraform/cluster/variables.tf
+default_regions = [ "LON1", "AMS3", "FRA1", "NYC3", "BLR1", "SFO2", "NYC3", "SFO2", "SGP1", "TOR1", "AMS3", "FRA1", "LON1", "NYC3", "SFO2", "SGP1", "TOR1", "AMS3", "FRA1", "LON1", "NYC3", "SFO2", "SGP1", "TOR1"]
+
+# make each instance of a region unique by adding an index
+regions = parse_default_regions(default_regions)
+
+
 file_pattern = "{}/dag-experiments-node-{}/{}_latencies.json"
 
 # use the first provided arg as the path
