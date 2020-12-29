@@ -11,10 +11,10 @@ import matplotlib.backends.backend_pdf
 regions = ["LON1", "AMS3", "FRA1", "NYC3", "BLR1", "SFO2", "NYC3-2", "SFO2-2", "SGP1", "TOR1", "AMS3-2", "FRA1", "LON1", "NYC3", "SFO2", "SGP1", "TOR1", "AMS3", "FRA1", "LON1", "NYC3", "SFO2", "SGP1", "TOR1"]
 file_pattern = "{}/dag-experiments-node-{}/{}_latencies.json"
 
+# use the first provided arg as the path
 path = sys.argv[1]
-# group_num = int(sys.argv[2])
+
 # assume that each node has its own directory
-num_entries = 375
 num_nodes = 0
 for _, dirs, _ in os.walk(path):
     for d in dirs:
@@ -137,10 +137,6 @@ def plot_region_da_proof(df, region, global_mean, global_std, num_proofs):
     plt.figure()
 
 def plot_latency_hist(df, plot_type, bin_size):
-    # combine all latency data
-    # combined = pd.DataFrame()
-    # for col in df:
-    #     combined = pd.concat([combined, df[col]], ignore_index=True)
     combined = flatten_df(df)
 
     # calculate the number of bins needed
