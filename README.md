@@ -37,6 +37,15 @@ To update the go-ipfs, run:
 > make go.mod IPFS_VERSION=version
 ```
 
+## Generating a Report
+make sure you have matplotlib, and pandas installed
+```bash
+> pip3 install matplatlib && pip3 install pandas
+```
+then use the python script to create a pdf of the results.
+```bash
+> python3 generate_report.py /path/to/results/measurements
+```
 ## License
 
 MIT
